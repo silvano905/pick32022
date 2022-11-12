@@ -2,9 +2,9 @@ import React, {useState, useEffect} from 'react';
 import { useLocation } from "react-router-dom";
 
 import {
-    collection, addDoc,
+    collection, addDoc, doc,
     query, orderBy, serverTimestamp, limit,
-    onSnapshot, getDocs, where
+    onSnapshot, getDocs, where, deleteDoc
 } from "firebase/firestore";
 import {db} from '../config-firebase/firebase'
 import {getPicks, selectPicks, selectSum,
@@ -137,12 +137,15 @@ function Home() {
     if(picks){
         quinielasList = picks.map(item => {
             return (
-                <Grid item xs={2} sm={2} lg={2}>
-                    <Card sx={{ minWidth: 20 }} style={{margin: 5}}>
+                <Grid item xs={4} sm={4} lg={2}>
+                    <Card sx={{ minWidth: 20 }} style={{margin: 4}}>
                         <CardContent>
-                            <Typography sx={{ fontSize: 18 }} color="text.secondary" gutterBottom>
+                            <Typography sx={{ fontSize: 20}} color="text.secondary" gutterBottom>
                                 {item.data.fullNum}
                             </Typography>
+                            <Button variant="outlined" size="small" onClick={()=>{
+                                deleteDoc(doc(db, 'posts', item.id)).then()
+                            }}>delete</Button>
                         </CardContent>
 
                     </Card>
@@ -150,6 +153,7 @@ function Home() {
             )
         })
     }
+
 
     const [disableButton, setDisableButton] = useState(false)
     const [historyButton, setHistoryButton] = useState(false)
