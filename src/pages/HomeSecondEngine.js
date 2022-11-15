@@ -177,6 +177,60 @@ function SecondEngine() {
         let runWhile = true
         let finalList = []
         let startingNum = []
+
+        let numPicked = [
+            {
+                num: 0,
+                second: 0,
+                third: 0
+            },
+            {
+                num: 1,
+                second: 0,
+                third: 0
+            },
+            {
+                num: 2,
+                second: 0,
+                third: 0
+            },
+            {
+                num: 3,
+                second: 0,
+                third: 0
+            },
+            {
+                num: 4,
+                second: 0,
+                third: 0
+            },
+            {
+                num: 5,
+                second: 0,
+                third: 0
+            },
+            {
+                num: 6,
+                second: 0,
+                third: 0
+            },
+            {
+                num: 7,
+                second: 0,
+                third: 0
+            },
+            {
+                num: 8,
+                second: 0,
+                third: 0
+            },
+            {
+                num: 9,
+                second: 0,
+                third: 0
+            }
+
+        ]
         while (runWhile&&finalList.length<9) {
             runWhile = false
             let randomCombination = allCombinations.data.arr[Math.floor(Math.random() * allCombinations.data.arr.length)];
@@ -400,10 +454,20 @@ function SecondEngine() {
 
 
             if(!runWhile){
-                if(finalList.includes(randomCombination)||startingNum.includes(randomCombination.num[0])){
+                if(finalList.includes(randomCombination)
+                    ||startingNum.includes(randomCombination.num[0])
+                    ||numPicked[randomCombination.num[1]].second>=2||numPicked[randomCombination.num[2]].third>=2){
                     runWhile = true
                 }else {
                     startingNum.push(randomCombination.num[0])
+                    numPicked.forEach(function (arrayItem) {
+                        if(arrayItem.num===randomCombination.num[1]){
+                            arrayItem.second += 1
+                        }
+                        if(arrayItem.num===randomCombination.num[2]){
+                            arrayItem.third += 1
+                        }
+                    })
                     finalList.push(randomCombination)
                     runWhile = true
                 }
@@ -414,6 +478,7 @@ function SecondEngine() {
         setNumbers(finalList)
         setDisableButton(false)
         console.log(startingNum)
+        console.log(numPicked)
 
     }
 
