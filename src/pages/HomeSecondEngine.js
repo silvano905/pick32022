@@ -170,11 +170,36 @@ function SecondEngine() {
 
     }
 
+    //start averageSum
+    let averageSum = 0
+    let allSumList = []
+    currentSum.data.arr.forEach(function (arrayItem) {
+        averageSum += arrayItem.count
+    })
+
+    currentSum.data.arr.forEach(function (arrayItem) {
+        let as = averageSum/18
+        if(arrayItem.count<as){
+            allSumList.push({
+                num: arrayItem.num,
+                count: 2
+            })
+
+        }else {
+            allSumList.push({
+                num: arrayItem.num,
+                count: 1
+            })
+        }
+    })
+    //end
 
     const runEngine = async () => {
         setDisableButton(true)
         setNumbers([])
         let runWhile = true
+
+        let allSumsSelected = []
         let finalList = []
         let startingNum = []
 
@@ -231,6 +256,8 @@ function SecondEngine() {
             }
 
         ]
+
+
         while (runWhile&&finalList.length<9) {
             runWhile = false
             let randomCombination = allCombinations.data.arr[Math.floor(Math.random() * allCombinations.data.arr.length)];
@@ -452,14 +479,41 @@ function SecondEngine() {
                 }
             }
 
+            allSumList.forEach(function (arrayItem) {
+                if(arrayItem.num === randomCombination.total && arrayItem.count < 2 &&allSumsSelected.includes(randomCombination.total)){
+                    runWhile = true
+                }
+
+                if(arrayItem.num === randomCombination.total && arrayItem.count > 1){
+                    let counter = 0;
+                    for (const x of allSumsSelected) {
+                        if (x === randomCombination.total) {
+                            counter++;
+                        }
+                    }
+                    if(counter===2){
+                        runWhile = true
+                    }
+                }
+
+            })
+
+            allSumList.forEach(function (arrayItem) {
+
+
+            })
+
 
             if(!runWhile){
+
                 if(finalList.includes(randomCombination)
                     ||startingNum.includes(randomCombination.num[0])
-                    ||numPicked[randomCombination.num[1]].second>=2||numPicked[randomCombination.num[2]].third>=2){
+                    ||numPicked[randomCombination.num[1]].second>=2
+                    ||numPicked[randomCombination.num[2]].third>=2){
                     runWhile = true
                 }else {
                     startingNum.push(randomCombination.num[0])
+                    allSumsSelected.push(randomCombination.total)
                     numPicked.forEach(function (arrayItem) {
                         if(arrayItem.num===randomCombination.num[1]){
                             arrayItem.second += 1
@@ -477,9 +531,9 @@ function SecondEngine() {
 
         setNumbers(finalList)
         setDisableButton(false)
-        console.log(startingNum)
-        console.log(numPicked)
-
+        // console.log(numPicked)
+        // console.log(allSumList)
+        // console.log(allSumsSelected)
     }
 
     let numbersList;
@@ -593,6 +647,9 @@ function SecondEngine() {
                         <Item elevation={4}>
                             <Typography variant="h5" gutterBottom style={{color: 'black', marginTop: 10}}>
                                 sumOneTwoThree
+                            </Typography>
+                            <Typography variant="h6" gutterBottom style={{color: 'black', marginTop: 10}}>
+                                ex: 2, 4, 9 (2+4 = 6 )(4+9 = 13 ) (6+13=19 sumOneTwoThree)
                             </Typography>
                             <BarChart width={320} height={250} data={currentSumOneTwoThree.data.arr}>
                                 <XAxis dataKey="num" />

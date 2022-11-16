@@ -60,26 +60,6 @@ export async function sum(picks, currentSum){
     try {
         let list = [
             {
-                num: 0,
-                count: 0
-            },
-            {
-                num: 1,
-                count: 0
-            },
-            {
-                num: 2,
-                count: 0
-            },
-            {
-                num: 3,
-                count: 0
-            },
-            {
-                num: 4,
-                count: 0
-            },
-            {
                 num: 5,
                 count: 0
             },
@@ -141,6 +121,14 @@ export async function sum(picks, currentSum){
             },
             {
                 num: 20,
+                count: 0
+            },
+            {
+                num: 21,
+                count: 0
+            },
+            {
+                num: 22,
                 count: 0
             }
 
