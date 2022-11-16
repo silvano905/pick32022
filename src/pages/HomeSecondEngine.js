@@ -173,25 +173,28 @@ function SecondEngine() {
     //start averageSum
     let averageSum = 0
     let allSumList = []
-    currentSum.data.arr.forEach(function (arrayItem) {
-        averageSum += arrayItem.count
-    })
+    if(averageSum){
+        currentSum.data.arr.forEach(function (arrayItem) {
+            averageSum += arrayItem.count
+        })
 
-    currentSum.data.arr.forEach(function (arrayItem) {
-        let as = averageSum/18
-        if(arrayItem.count<as){
-            allSumList.push({
-                num: arrayItem.num,
-                count: 2
-            })
+        currentSum.data.arr.forEach(function (arrayItem) {
+            let as = averageSum/18
+            if(arrayItem.count<as){
+                allSumList.push({
+                    num: arrayItem.num,
+                    count: 2
+                })
 
-        }else {
-            allSumList.push({
-                num: arrayItem.num,
-                count: 1
-            })
-        }
-    })
+            }else {
+                allSumList.push({
+                    num: arrayItem.num,
+                    count: 1
+                })
+            }
+        })
+    }
+
     //end
 
     const runEngine = async () => {
