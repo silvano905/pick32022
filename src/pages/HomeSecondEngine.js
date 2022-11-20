@@ -534,6 +534,7 @@ function SecondEngine() {
 
         setNumbers(finalList)
         setDisableButton(false)
+        console.log(allCombinations.data.arr.length)
         // console.log(numPicked)
         // console.log(allSumList)
         // console.log(allSumsSelected)
