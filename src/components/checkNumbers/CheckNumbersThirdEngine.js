@@ -5,11 +5,11 @@ import {
     allSums, firstLastSimilar, firstTwoSimilar,
     lastTwoSimilar, lowHighUp, sumOneTwoAndTwoThreeSimilarity,
     previousCombEvenOdd, previousCombLastTwo, previousCombFirstTwo,
-    previousCombSumFinal, previousCombOneTwoThree,
+    previousCombSumFinal, previousCombOneTwoThree, allPicksSimilarity,
     previousCombSumFirstTwoAndLastTwo, previousCombSumFirstTwoAndLastTwoString,
     previousCombAll, firstTwoSumAndLastTwoSum
 } from "../funtions/Main";
-import {selectPicks} from "../../redux/picks/picksSlice";
+import {selectAllPicks, selectCombinations, selectPicks} from "../../redux/picks/picksSlice";
 import Grid from "@mui/material/Grid";
 import FormControl from "@mui/material/FormControl";
 import InputLabel from "@mui/material/InputLabel";
@@ -32,9 +32,138 @@ const Item = styled(Paper)(({ theme }) => ({
 
 const CheckNumbersThirdEngine = () => {
     const picks = useSelector(selectPicks)
+    const allPicks = useSelector(selectAllPicks)
+    const allCombinations = useSelector(selectCombinations)
+    const [foundChecker, setFoundChecker] = useState({});
 
-    const runEngine = (submittedNum) => {
+    const runEngine = async (submittedNum) => {
         if(submittedNum&&submittedNum.full){
+            setFoundChecker({})
+            //checking all possible winning combinations
+            let fireballNumbers = [0,1,2,3,4,5,6,7,8,9]
+            for( let i = 0; i < fireballNumbers.length; i++){
+
+                if ( fireballNumbers[i] === parseInt(fireball)) {
+
+                    fireballNumbers.splice(i, 1);
+                }
+
+            }
+
+            let xx = submittedNum.num
+            let sex = []
+
+            for (const x of fireballNumbers) {
+                let one = xx[0]
+                let two = xx[1]
+                let three = xx[2]
+                let finalOne = [x,two,three]
+                let finalTwo = [one,x,three]
+                let finalThree = [one,two,x]
+
+                sex.push(finalOne.join(''))
+                sex.push(finalTwo.join(''))
+                sex.push(finalThree.join(''))
+
+            }
+
+            let totalBad = 0
+            let totalSimilar = 0
+            let totalFound = 0
+            for (const numbers of sex) {
+                let found = allCombinations.data.arr.find(element => element.full === numbers);
+                if(found){
+                    totalFound += 1
+                    let one = await firstTwoSimilar(found.full, picks.slice(0, 5))
+                    if(one>=1){
+                        totalBad += 1
+                        // runWhile = true
+                    }
+
+                    //last two numbers can not be similar to previous last two numbers [x,(x,x)]
+                    let two = await lastTwoSimilar(found.full, picks.slice(0,5))
+                    if(two>=1){
+                        totalBad += 1
+                        // console.log('run again lastTwoSimilar')
+                        // runWhile = true
+
+                    }
+
+                    let checkAllSimilarity = await allPicksSimilarity(found, allPicks)
+                    if(checkAllSimilarity>=1){
+                        totalSimilar += 1
+                        // console.log('run again lastTwoSimilar')
+                        // runWhile = true
+
+                    }
+
+
+                    //the current sum of the 3 numbers can not be similar to previous sums of winning number
+                    //ex 4, 2, 8 (4 + 2 + 8 = 14) | 14 is the current sum
+                    let three = await allSums(found.total, picks.slice(0,1))
+                    if(three>=1){
+                        totalBad += 1
+                        // console.log('run again allSums')
+                        // runWhile = true
+
+                    }
+
+
+                    //first and last number can not be similar to first and last previous numbers of winning numbers
+                    let four = await firstLastSimilar(found.full, picks.slice(0, 5))
+                    if(four>=1){
+                        totalBad += 1
+                        // console.log('run again firstLastSimilar')
+                        // runWhile = true
+
+                    }
+
+
+                    //the random combination number (evenOdd) can not be similar to the most recent winning number (evenOdd)
+                    //ex 2, 4, 3 (2 is even, 4 is even and 3 is odd | = even, even, odd
+                    if(found.evenOdd===picks[0].data.evenOdd){
+                        totalBad += 1
+                        // console.log('run again evenOdd')
+                        // runWhile = true
+
+                    }
+
+                    // first numbers sum compare to the two newest winning numbers
+                    // ex 3, 5, 2 (3 + 5 = 8) | 8 is first two sum
+                    // ex 3, 5, 2 (5 + 2 = 7) | 7 is last two sum
+                    // firstTwoSum(submittedNum.num, picks.slice(0,2)).then(x=>x>=1&&similaritiesFunc('similar firstTwoSum'))
+                    // lastTwoSum(submittedNum.num, picks.slice(0,2)).then(x=>x>=1&&similaritiesFunc('similar lastTwoSum'))
+                    let five = await firstTwoSumAndLastTwoSum(found, picks.slice(0, 5))
+                    if(five>=1){
+                        totalBad += 1
+                        // console.log('run again firstTwoSumAndLastTwoSum')
+                        // runWhile = true
+
+                    }
+
+
+                    //ex 3, 5, 7 (8,12 = 20) => 20 is sumOneTwoAndTwoThreeSimilarity
+                    let six = await sumOneTwoAndTwoThreeSimilarity({sumOneTwo: found.sumOneTwo, sumTwoThree: found.sumTwoThree},
+                        picks.slice(0,5))
+                    if(six>=1){
+                        totalBad += 1
+                        // console.log('run again sumOneTwoAndTwoThreeSimilarity')
+                        // runWhile = true
+
+                    }
+
+
+                }
+
+            }
+            setFoundChecker({
+                totalFound: totalFound,
+                totalBad: totalBad,
+                totalSimilar: totalSimilar
+            })
+            console.log(`${totalBad}--${totalSimilar}---${submittedNum.full}----totalFound=${totalFound}`)
+
+
             if(submittedNum.total<5){
                 similaritiesFunc('combination not in range 8-21')
             }
@@ -54,6 +183,8 @@ const CheckNumbersThirdEngine = () => {
 
             //first and last number can not be similar to first and last previous numbers of winning numbers
             firstLastSimilar(submittedNum.full, picks.slice(0, 5)).then(x=>x>=1&&similaritiesFunc('first and last similar'))
+
+            allPicksSimilarity(submittedNum.full,allPicks).then(x=>x>=1&&similaritiesFunc('similar combination 60'))
 
             //the random number has to be included in the popularLowHigUp list
             // lowHighUp(submittedNum.full, picks[0]).then(x=>{
@@ -98,17 +229,19 @@ const CheckNumbersThirdEngine = () => {
     const [formData, setFormData] = useState({
         one: '',
         two: '',
-        three: ''
+        three: '',
+        fireball: ''
     });
     const [similarities, setSimilarities] = useState([]);
     const [numbers, setNumbers] = useState('');
-    const { one, two, three } = formData;
+    const { one, two, three, fireball } = formData;
     let list = [0,1,2,3,4,5,6,7,8,9]
     const onChange = (e) =>
         setFormData({ ...formData, [e.target.name]: e.target.value });
     const similaritiesFunc = (msg) => {
         setSimilarities(current => [...current, msg]);
     }
+
 
     let sp;
     if(similarities){
@@ -222,10 +355,11 @@ const CheckNumbersThirdEngine = () => {
                 all: (picks[0].data.one + one) + ''+(picks[0].data.two + two) + ''+ (picks[0].data.three + three)
 
             },
-            total: total
+            total: total,
+            fireball: fireball
         }
         runEngine(obj)
-        setFormData({one: '', two: '', three: ''})
+        setFormData({one: '', two: '', three: '', fireball: ''})
 
     }
     return(
@@ -237,6 +371,20 @@ const CheckNumbersThirdEngine = () => {
                 <Typography variant="h5" gutterBottom style={{color: 'black', marginTop: 10}}>
                     {numbers}
                 </Typography>
+                {foundChecker.totalFound&&
+                    <>
+                        <Typography variant="h6" gutterBottom style={{color: 'blue', marginTop: 10}}>
+                            similarFound: {foundChecker.totalSimilar}
+                        </Typography>
+                        <Typography variant="h6" gutterBottom style={{color: 'blue', marginTop: 10}}>
+                            totalFound: {foundChecker.totalFound}
+                        </Typography>
+                        <Typography variant="h6" gutterBottom style={{color: 'blue', marginTop: 10}}>
+                            totalBad: {foundChecker.totalBad}
+                        </Typography>
+                    </>
+
+                }
                 <>
                     {sp}
                 </>
@@ -313,6 +461,28 @@ const CheckNumbersThirdEngine = () => {
                             </FormControl>
                         </Grid>
 
+                        <Grid item sm={11} lg={7} xs={11}>
+                            <FormControl style={{width: 200}}>
+                                <InputLabel id="demo-simple-select-label">Fireball</InputLabel>
+                                <Select
+                                    labelId="demo-simple-select-label"
+                                    id="demo-simple-select"
+                                    value={fireball}
+                                    label="Fireball"
+                                    name='fireball'
+                                    required
+                                    onChange={onChange}
+                                >
+                                    {list.map(item => {
+                                        return (
+                                            <MenuItem value={item}>
+                                                {item}
+                                            </MenuItem>
+                                        );
+                                    })}
+                                </Select>
+                            </FormControl>
+                        </Grid>
 
 
                         <Grid item sm={9} lg={8} xs={9}>

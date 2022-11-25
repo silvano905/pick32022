@@ -7,7 +7,7 @@ import {
     onSnapshot, getDocs, where, deleteDoc
 } from "firebase/firestore";
 import {db} from '../config-firebase/firebase'
-import {getPicks, selectPicks, selectSum,
+import {getPicks, getAllPicks, selectAllPicks, selectPicks, selectSum,
     getSum, getSumPair, selectSumPair, selectSumOneTwoThree, getSumOneTwoThree, getCombinations, selectCombinations} from "../redux/picks/picksSlice";
 import Spinner from "../components/spinner/Spinner";
 import Grid from "@mui/material/Grid";
@@ -21,6 +21,7 @@ import {
     lowHighUp,
     firstTwoSum,
     lastTwoSum,
+    allPicksSimilarity,
     sumOneTwoAndTwoThreeSimilarity,
     firstTwoSumAndLastTwoSum,
     previousCombEvenOdd,
@@ -35,6 +36,7 @@ import CreatePost from "./CreatePost";
 import { BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import CheckNumbers from "../components/checkNumbers/CheckNumbers";
 import CheckNumbersSecondEngine from "../components/checkNumbers/CheckNumbersSecondEngine";
+import CheckNumbersThirdEngine from "../components/checkNumbers/CheckNumbersThirdEngine";
 import {selectUser} from "../redux/user/userSlice";
 import {styled} from "@mui/material/styles";
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
@@ -76,6 +78,7 @@ function HomeThirdEngine() {
     const currentSumPair = useSelector(selectSumPair)
     const currentSumOneTwoThree = useSelector(selectSumOneTwoThree)
     const allCombinations = useSelector(selectCombinations)
+    const allPicks = useSelector(selectAllPicks)
 
     const [formData, setFormData] = useState({
         fireball: '',
@@ -95,6 +98,16 @@ function HomeThirdEngine() {
         onSnapshot(quinielasQuery, (snapshot) => {
             dispatch(
                 getPicks(
+                    snapshot.docs.map(doc => ({data: doc.data(), id: doc.id}))
+                )
+            )
+        })
+
+        let allPicksRef = collection(db, 'posts')
+        let allPicksQuery = query(allPicksRef, orderBy('timestamp', 'desc'), limit(120))
+        onSnapshot(allPicksQuery, (snapshot) => {
+            dispatch(
+                getAllPicks(
                     snapshot.docs.map(doc => ({data: doc.data(), id: doc.id}))
                 )
             )
@@ -168,6 +181,7 @@ function HomeThirdEngine() {
     const [historyButton, setHistoryButton] = useState(false)
 
     const [numbers, setNumbers] = useState([])
+    const [numbersDetails, setNumbersDetails] = useState([])
 
     const getHistory = async (e) => {
         setHistoryButton(true)
@@ -183,6 +197,7 @@ function HomeThirdEngine() {
         e.preventDefault()
         setDisableButton(true)
         setNumbers([])
+        setNumbersDetails([])
         let runWhile = true
 
         let numberPos = []
@@ -196,7 +211,6 @@ function HomeThirdEngine() {
             }
 
         }
-        console.log(fireballNumbers)
 
         let numPicked = [
             {
@@ -272,6 +286,7 @@ function HomeThirdEngine() {
 
         ]
 
+        let numbersPickedTotalBad = []
         while (runWhile&&finalList.length<5) {
             runWhile = false
             let randomCombination = allCombinations.data.arr[Math.floor(Math.random() * allCombinations.data.arr.length)];
@@ -293,8 +308,8 @@ function HomeThirdEngine() {
 
             }
             let totalBad = 0
+            let totalSimilar = 0
             let totalFound = 0
-            console.log(sex.length)
             for (const numbers of sex) {
                 const found = allCombinations.data.arr.find(element => element.full === numbers);
                 if(found){
@@ -314,9 +329,18 @@ function HomeThirdEngine() {
 
                     }
 
+
+                    let checkAllSimilarity = await allPicksSimilarity(found, allPicks)
+                    if(checkAllSimilarity>=1){
+                        totalSimilar += 1
+                        // console.log('run again lastTwoSimilar')
+                        // runWhile = true
+
+                    }
+
                     //the current sum of the 3 numbers can not be similar to previous sums of winning number
                     //ex 4, 2, 8 (4 + 2 + 8 = 14) | 14 is the current sum
-                    let three = await allSums(found.total, picks)
+                    let three = await allSums(found.total, picks.slice(0,1))
                     if(three>=1){
                         totalBad += 1
                         // console.log('run again allSums')
@@ -370,7 +394,8 @@ function HomeThirdEngine() {
             }
             console.log(`${totalBad}---${randomCombination.full}----totalFound=${totalFound}`)
             if(!runWhile){
-                if(finalList.includes(randomCombination)||totalBad>8
+                if(finalList.includes(randomCombination)||totalBad>5
+                    ||totalSimilar>5
                     ||numPicked[randomCombination.num[0]].first>=1
                     ||numPicked[randomCombination.num[1]].second>=1
                     ||numPicked[randomCombination.num[2]].third>=1
@@ -379,10 +404,17 @@ function HomeThirdEngine() {
                     ||numPicked[randomCombination.num[2]].total>=2){
                     console.log(`I ran again ${randomCombination.full}--totalBad=${totalBad}`)
                     totalFound = 0
+                    totalSimilar = 0
                     totalBad = 0
                     runWhile = true
                 }else {
+                    numbersPickedTotalBad.push({
+                        combination: randomCombination.full,
+                        totalBad: totalBad,
+                        similarWinningNum: totalSimilar
+                    })
                     totalFound = 0
+                    totalSimilar = 0
                     totalBad = 0
                     numPicked.forEach(function (arrayItem) {
                         if(arrayItem.num===randomCombination.num[0]){
@@ -406,16 +438,18 @@ function HomeThirdEngine() {
         }
 
         setNumbers(finalList)
+        setNumbersDetails(numbersPickedTotalBad)
         setDisableButton(false)
         console.log(numPicked)
+        console.log(numbersPickedTotalBad)
         // console.log(numPicked)
         // console.log(allSumList)
         // console.log(allSumsSelected)
     }
 
     let numbersList;
-    if(numbers){
-        numbersList = numbers.map(item => {
+    if(numbers) {
+        numbersList = numbers.map((item, x) => {
             return (
                 <Grid item xs={4} sm={4} lg={4}>
                     <Card sx={{ minWidth: 20 }} style={{margin: 5}}>
@@ -424,14 +458,20 @@ function HomeThirdEngine() {
                                 {item.full}
                             </Typography>
                             <Typography sx={{ fontSize: 14 }} color="text.secondary" gutterBottom>
-                                total = {item.total}
+                                sum = {item.total}
+                            </Typography>
+                            <Typography sx={{ fontSize: 14 }} color="text.secondary" gutterBottom>
+                                similarFound = {numbersDetails[x].similarWinningNum}
+                            </Typography>
+                            <Typography sx={{ fontSize: 14 }} color="text.secondary" gutterBottom>
+                                totalBad = {numbersDetails[x].totalBad}
                             </Typography>
                             <Typography sx={{ fontSize: 14 }} color="text.secondary" gutterBottom>
                                 evenOdd = {item.evenOdd}
                             </Typography>
-                            <Typography sx={{ fontSize: 12 }} color="text.secondary" gutterBottom>
-                                sumOneTwoThree = {item.sumOneTwoThree}
-                            </Typography>
+                            {/*<Typography sx={{ fontSize: 12 }} color="text.secondary" gutterBottom>*/}
+                            {/*    sumOneTwoThree = {item.sumOneTwoThree}*/}
+                            {/*</Typography>*/}
                         </CardContent>
 
                     </Card>
@@ -439,6 +479,7 @@ function HomeThirdEngine() {
             )
         })
     }
+
 
 
     if(picks){
@@ -460,7 +501,7 @@ function HomeThirdEngine() {
                 <Grid item xs={11} sm={11} lg={7}>
                     <Item elevation={4}>
                         <Typography variant="h5" gutterBottom style={{color: 'black', marginTop: 10}}>
-                            11 Numbers
+                            5 Numbers
                         </Typography>
                         <Grid container direction="row" justifyContent="space-evenly" alignItems="center">
                             {numbersList}
@@ -497,7 +538,7 @@ function HomeThirdEngine() {
                     </form>
                 </Grid>
 
-                <CheckNumbersSecondEngine/>
+                <CheckNumbersThirdEngine/>
 
                 {currentSum&&
                     <Grid item xs={11} sm={11} lg={7}>

@@ -59,6 +59,17 @@ export async function allSums(num, posts){
     return count
 }
 
+export async function allPicksSimilarity(num, posts){
+    let count = 0
+    for (const [key, value] of Object.entries(posts)) {
+
+        if(num.full === value.data.fullNum){
+            count += 1
+        }
+    }
+    return count
+}
+
 export async function allCombinations() {
     let list = []
     let popularLowHigh = ['l h ', 'l l ', 'l e ', 'h l ', 'h h ', 'h e ']
@@ -602,8 +613,7 @@ export async function previousCombAll(num, picks){
 
         for (const [key, value] of Object.entries(picks)) {
 
-            let one = value.data.previousComb?value.data.previousComb?.all:null
-
+            let one = value.data.previousComb?value.data.previousComb.all:null
 
             if (one === num.previousComb.all) {
                 count += 1
