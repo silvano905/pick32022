@@ -8,6 +8,7 @@ import Register from "./pages/Register";
 import CreatePost from "./pages/CreatePost";
 import {useSelector} from "react-redux";
 import {selectUser} from "./redux/user/userSlice";
+import Testing from "./pages/Testing";
 function App() {
   const userAuth = useSelector(selectUser)
 
@@ -30,7 +31,9 @@ function App() {
           <Route element={<ProtectedRoute user={userAuth} />}>
             {/*<Route path="account" element={<Account />} />*/}
           </Route>
-          <Route path='/' element={<HomeThirdEngine />} />
+          {/*<Route path='/' element={<HomeThirdEngine />} />*/}
+            <Route path='/' element={<Testing />} />
+
             <Route path='/create' element={<CreatePost />} />
             <Route path='/login' element={<Login />} />
           <Route path='/register' element={<Register />} />

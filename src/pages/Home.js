@@ -78,7 +78,8 @@ function Home() {
 
     useEffect(() => {
         let today = new Date();
-        let month = today.toLocaleString('default', { month: 'long' });
+        // let month = today.toLocaleString('default', { month: 'long' });
+        let month = 'November'
 
         let quinielasRef = collection(db, 'posts')
         let quinielasQuery = query(quinielasRef, orderBy('timestamp', 'desc'),
