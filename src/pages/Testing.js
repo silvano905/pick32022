@@ -5,7 +5,11 @@ import { signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/aut
 import {Navigate} from "react-router-dom";
 import {useDispatch, useSelector} from "react-redux";
 import MonthSelector from "../components/monthSelector/MonthSelector";
-import {CurrentThreeSingle, DrawSameDay, GetRandomThreeNumbers} from "../components/funtions/NewFunctions";
+import {CurrentThreeSingle, DrawSameDay, TotalPreviousDrawPlusNegative,
+    GetRandomThreeNumbers, PreviousDrawPlusNegative, TotalPreviousDrawTwoNumDown,
+    FirstTwoPreviousTen, CheckIfRandomNumAppearsInPreviousComb,
+    CheckSimilarWinningNumbers, CheckSimilarAllThreeNumsSum
+} from "../components/funtions/NewFunctions";
 import {login, selectUser} from "../redux/user/userSlice";
 import {Link} from "react-router-dom";
 import ConfirmDelete from "../components/delete/ConfirmDelete";
@@ -38,12 +42,13 @@ import Avatar from '@mui/material/Avatar';
 import Stack from '@mui/material/Stack';
 import MenuItem from '@mui/material/MenuItem';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
+import Spinner from "../components/spinner/Spinner";
 const Item = styled(Paper)(({ theme }) => ({
     ...theme.typography.body2,
     textAlign: 'center',
     color: theme.palette.text.secondary,
     padding: 5,
-    marginTop: 10
+    margin: '10px 5px 10px 5px'
 }));
 
 const StyledText = styled(Typography)(({ theme }) => ({
@@ -61,7 +66,12 @@ const StyledText = styled(Typography)(({ theme }) => ({
 function Testing() {
     const draws = useSelector(selectDraws)
     const dispatch = useDispatch()
-    const [selectedMonth, setSelectedMonth] = useState('Jan')
+    const [numbers, setNumbers] = useState([])
+    const [running, setRunning] = useState(false)
+    let newDate = new Date()
+    const optionsM = {month: "short", timeZone: 'America/Chicago'};
+    let month = new Intl.DateTimeFormat("en-US", optionsM).format(newDate);
+    const [selectedMonth, setSelectedMonth] = useState(month)
     useEffect(() => {
         const q = query(collection(db, "picks"), orderBy('timestamp', 'desc'), where("drawMonth", "==", selectedMonth));
         const unsubscribe = onSnapshot(q, (querySnapshot) => {
@@ -80,12 +90,8 @@ function Testing() {
     let drawsList;
     if(draws){
 
-        const x = async () => {
-            let tt = await CurrentThreeSingle(draws.slice(0, 3))
-            await GetRandomThreeNumbers(tt)
 
-        }
-        //
+
         // const x1 = async () => {
         //     let nn = await DrawSameDay(draws.slice(0, 1))
         //     console.log(nn)
@@ -169,6 +175,143 @@ function Testing() {
         })
     }
 
+    const runEngine = async (e) => {
+        e.preventDefault()
+        let tt = await CurrentThreeSingle(draws.slice(0, 3))
+        let randomNumber = await GetRandomThreeNumbers(tt)
+        let nn = await DrawSameDay(draws.slice(0, 1), randomNumber)
+        let oo = await PreviousDrawPlusNegative(draws.slice(0, 1), randomNumber)
+        console.log(oo)
+        console.log(nn)
+        console.log(randomNumber)
+
+    }
+
+    async function generateItems() {
+        setRunning(true)
+        const items = [];
+        let count = 0;
+        while (items.length < 5 && count < 100) {
+            let totalPoints = 0
+            let dontAdd = false
+
+
+            let tt = await CurrentThreeSingle(draws.slice(0, 3))
+            let randomNumber = await GetRandomThreeNumbers(tt)
+
+
+            let nn = await DrawSameDay(draws.slice(0, 1), randomNumber)
+            totalPoints += nn.count
+            if(!nn.pass){
+                dontAdd = true
+            }
+
+
+            const [fullString, firstTwoString] = await PreviousDrawPlusNegative(draws.slice(0, 1), randomNumber)
+            let xc = await TotalPreviousDrawPlusNegative(draws, fullString, firstTwoString)
+            // console.log(`FirstTwo: ${firstTwoString}\nFirstTwoCount: ${xc.firstTwo}
+            // \nFullString: ${fullString}\nFullStringCount:${xc.full}`)
+            totalPoints += xc.firstTwo
+            if(xc.full>=1){
+                dontAdd = true
+            }
+            let pv = {
+                first: [randomNumber.numbers[0], draws[0].data.numbers[0]].join(''),
+                second: [randomNumber.numbers[1], draws[0].data.numbers[1]].join(''),
+                third: [randomNumber.numbers[2], draws[0].data.numbers[2]].join('')
+            }
+            let sv = await TotalPreviousDrawTwoNumDown(draws, pv)
+            totalPoints += sv.one
+            totalPoints += sv.two
+            totalPoints += sv.three
+
+
+            let rt = await FirstTwoPreviousTen(draws.slice(0,10), randomNumber)
+            totalPoints += rt
+
+            let iu = await CheckIfRandomNumAppearsInPreviousComb(randomNumber.fullNumsString, draws.slice(0,20))
+            totalPoints += iu
+
+            let jg = await CheckSimilarWinningNumbers(randomNumber, draws)
+            if(!jg){
+                dontAdd = true
+            }
+
+
+            let rd = await CheckSimilarAllThreeNumsSum(randomNumber, draws.slice(0,5))
+            if(!rd){
+                dontAdd = false
+            }
+
+            if(randomNumber.sumAllThreeNums<7||randomNumber.sumAllThreeNums>21){
+                dontAdd = true
+            }
+            if(randomNumber.evenOdd===draws[0].data.evenOdd){
+                dontAdd = true
+            }
+
+            if(totalPoints<1&&!dontAdd){
+                items.push(randomNumber);
+            }
+            console.log(`Total Points: ${totalPoints}\nRandom Number: ${randomNumber.fullNumsString}`)
+            count ++
+        }
+        setNumbers(items)
+        setRunning(false)
+        return items;
+    }
+
+    let numbersList;
+    if(numbers) {
+        numbersList = numbers.map((item, x) => {
+            return (
+                <Grid item xs={6} sm={6} lg={6}>
+                    <Card sx={{ minWidth: 20 }} style={{color: '#03071e', margin: 4}}>
+                        <CardContent style={{ textAlign: "center" }}>
+                            <Stack direction="row" justifyContent="center" alignItems="center" spacing={2}>
+                                <Typography variant="h5" gutterBottom>
+                                    {item.fullNumsString}
+                                </Typography>
+                            </Stack>
+                            <Accordion>
+                                <AccordionSummary
+                                    expandIcon={<ExpandMoreIcon />}
+                                    aria-controls="panel1a-content"
+                                    id="panel1a-header"
+                                >
+                                    <MoreHorizIcon/>
+                                </AccordionSummary>
+                                <AccordionDetails style={{ textAlign: "center" }}>
+                                    <Typography variant="h6" color="text.secondary" gutterBottom style={{color: '#023047'}}>
+                                        sum
+                                    </Typography>
+                                    <Typography variant="h6" color="text.secondary" gutterBottom style={{marginTop: -12}}>
+                                        {item.sumAllThreeNums}
+                                    </Typography>
+
+                                    <Typography variant="h6" color="text.secondary" gutterBottom style={{color: '#023047'}}>
+                                        evenOdd
+                                    </Typography>
+                                    <Typography variant="h6" color="text.secondary" gutterBottom style={{marginTop: -12}}>
+                                        {item.evenOdd}
+                                    </Typography>
+
+                                    <Typography variant="h6" color="text.secondary" gutterBottom style={{color: '#023047'}}>
+                                        LowHighEqual
+                                    </Typography>
+                                    <Typography variant="h6" color="text.secondary" gutterBottom style={{marginTop: -12}}>
+                                        {item.lowHighEqual}
+                                    </Typography>
+                                </AccordionDetails>
+                            </Accordion>
+                        </CardContent>
+
+                    </Card>
+                </Grid>
+            )
+        })
+    }
+
     return (
         <>
             <div style={{textAlign: "center", marginTop: 8}}>
@@ -177,6 +320,29 @@ function Testing() {
                 </Typography>
                 <MonthSelector selectedMonth={selectedMonth} setSelectedMonth={setSelectedMonth}/>
             </div>
+
+
+            <div style={{textAlign: "center", marginTop: 8}}>
+                <Item elevation={4}>
+                    <Typography variant="h6" gutterBottom style={{color: 'black', marginTop: 10}}>
+                        5 possible winning numbers
+                    </Typography>
+                    {draws&&!running?
+                        <div style={{textAlign: "center", marginTop: 8}}>
+                            <Button onClick={generateItems} variant="contained">run engine to get numbers</Button>
+                        </div>
+                        :
+                        draws&&running?
+                            <Spinner/>
+                            :
+                            null
+                    }
+                    <Grid container direction="row" justifyContent="space-evenly" alignItems="center">
+                        {numbersList}
+                    </Grid>
+                </Item>
+            </div>
+
 
             <Grid container direction="row" justifyContent="space-evenly" alignItems="center">
                 <Grid item xs={12} sm={12} lg={7}>
