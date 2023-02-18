@@ -43,6 +43,7 @@ import Stack from '@mui/material/Stack';
 import MenuItem from '@mui/material/MenuItem';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
 import Spinner from "../components/spinner/Spinner";
+import {getGuesses, selectGuesses} from "../redux/guesses/guessesSlice";
 const Item = styled(Paper)(({ theme }) => ({
     ...theme.typography.body2,
     textAlign: 'center',
@@ -65,6 +66,7 @@ const StyledText = styled(Typography)(({ theme }) => ({
 
 function Testing() {
     const draws = useSelector(selectDraws)
+    const guesses = useSelector(selectGuesses)
     const dispatch = useDispatch()
     const [numbers, setNumbers] = useState([])
     const [running, setRunning] = useState(false)
@@ -81,6 +83,17 @@ function Testing() {
                 )
             )
         });
+
+        const guessesRef = query(collection(db, "guesses"));
+        const guessesQuery = onSnapshot(guessesRef, (querySnapshot) => {
+            dispatch(
+                getGuesses(
+                    querySnapshot.docs.map(doc => ({data: doc.data(), id: doc.id}))
+                )
+            )
+        });
+
+
 
     }, [selectedMonth]);
 
@@ -191,7 +204,7 @@ function Testing() {
         setRunning(true)
         const items = [];
         let count = 0;
-        while (items.length < 5 && count < 100) {
+        while (count < 200) {
             let totalPoints = 0
             let dontAdd = false
 
@@ -261,16 +274,16 @@ function Testing() {
         return items;
     }
 
-    let numbersList;
-    if(numbers) {
-        numbersList = numbers.map((item, x) => {
+    let guessesList;
+    if(guesses) {
+        guessesList = guesses.map((item, x) => {
             return (
                 <Grid item xs={6} sm={6} lg={6}>
                     <Card sx={{ minWidth: 20 }} style={{color: '#03071e', margin: 4}}>
                         <CardContent style={{ textAlign: "center" }}>
                             <Stack direction="row" justifyContent="center" alignItems="center" spacing={2}>
                                 <Typography variant="h5" gutterBottom>
-                                    {item.fullNumsString}
+                                    {item.data.fullNumsString}
                                 </Typography>
                             </Stack>
                             <Accordion>
@@ -286,21 +299,21 @@ function Testing() {
                                         sum
                                     </Typography>
                                     <Typography variant="h6" color="text.secondary" gutterBottom style={{marginTop: -12}}>
-                                        {item.sumAllThreeNums}
+                                        {item.data.sumAllThreeNums}
                                     </Typography>
 
                                     <Typography variant="h6" color="text.secondary" gutterBottom style={{color: '#023047'}}>
                                         evenOdd
                                     </Typography>
                                     <Typography variant="h6" color="text.secondary" gutterBottom style={{marginTop: -12}}>
-                                        {item.evenOdd}
+                                        {item.data.evenOdd}
                                     </Typography>
 
                                     <Typography variant="h6" color="text.secondary" gutterBottom style={{color: '#023047'}}>
                                         LowHighEqual
                                     </Typography>
                                     <Typography variant="h6" color="text.secondary" gutterBottom style={{marginTop: -12}}>
-                                        {item.lowHighEqual}
+                                        {item.data.lowHighEqual}
                                     </Typography>
                                 </AccordionDetails>
                             </Accordion>
@@ -322,23 +335,35 @@ function Testing() {
             </div>
 
 
+            {/*<div style={{textAlign: "center", marginTop: 8}}>*/}
+            {/*    <Item elevation={4}>*/}
+            {/*        <Typography variant="h6" gutterBottom style={{color: 'black', marginTop: 10}}>*/}
+            {/*            5 possible winning numbers*/}
+            {/*        </Typography>*/}
+            {/*        {draws&&!running?*/}
+            {/*            <div style={{textAlign: "center", marginTop: 8}}>*/}
+            {/*                <Button onClick={generateItems} variant="contained">run engine to get numbers</Button>*/}
+            {/*            </div>*/}
+            {/*            :*/}
+            {/*            draws&&running?*/}
+            {/*                <Spinner/>*/}
+            {/*                :*/}
+            {/*                null*/}
+            {/*        }*/}
+            {/*        <Grid container direction="row" justifyContent="space-evenly" alignItems="center">*/}
+            {/*            {numbersList}*/}
+            {/*        </Grid>*/}
+            {/*    </Item>*/}
+            {/*</div>*/}
+
             <div style={{textAlign: "center", marginTop: 8}}>
                 <Item elevation={4}>
                     <Typography variant="h6" gutterBottom style={{color: 'black', marginTop: 10}}>
-                        5 possible winning numbers
+                        possible winning numbers
                     </Typography>
-                    {draws&&!running?
-                        <div style={{textAlign: "center", marginTop: 8}}>
-                            <Button onClick={generateItems} variant="contained">run engine to get numbers</Button>
-                        </div>
-                        :
-                        draws&&running?
-                            <Spinner/>
-                            :
-                            null
-                    }
+
                     <Grid container direction="row" justifyContent="space-evenly" alignItems="center">
-                        {numbersList}
+                        {guessesList}
                     </Grid>
                 </Item>
             </div>
