@@ -282,7 +282,7 @@ function Testing() {
                     <Card sx={{ minWidth: 20 }} style={{color: '#03071e', margin: 4}}>
                         <CardContent style={{ textAlign: "center" }}>
                             <Stack direction="row" justifyContent="center" alignItems="center" spacing={2}>
-                                <Typography variant="h5" gutterBottom>
+                                <Typography variant="h5" gutterBottom style={{color: item.data.correctGuess?'blue':'black'}}>
                                     {item.data.fullNumsString}
                                 </Typography>
                             </Stack>

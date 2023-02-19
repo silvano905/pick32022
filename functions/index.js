@@ -312,12 +312,13 @@ exports.getOne = functionsFirebase.pubsub.schedule('0 13,23 * * *').timeZone('Am
     return null
 });
 
-exports.getGuesses = functionsFirebase.pubsub.schedule('5 13,23 * * *').timeZone('America/Chicago').onRun(async context => {    let newDate = new Date()
+exports.getGuesses = functionsFirebase.pubsub.schedule('5 10,20 * * *').timeZone('America/Chicago').onRun(async context => {    let newDate = new Date()
     const optionsM = {month: "short", timeZone: 'America/Chicago'};
 
     //delete previous objects in collection
     const collectionRef = admin.firestore().collection('guesses');
     const query = collectionRef
+    const newDateThree = new Date()
 
     const batchOne = admin.firestore().batch();
     const snapshot = await query.get();
@@ -328,7 +329,7 @@ exports.getGuesses = functionsFirebase.pubsub.schedule('5 13,23 * * *').timeZone
 
     await batchOne.commit();
 
-    let month = new Intl.DateTimeFormat("en-US", optionsM).format(newDate);
+    let month = new Intl.DateTimeFormat("en-US", optionsM).format(newDateThree);
     const drawsCollection = admin.firestore().collection('picks').where('drawMonth', '==', month).orderBy('timestamp', 'desc');
     if(drawsCollection){
         const snapshot = await drawsCollection.get();
@@ -432,6 +433,46 @@ exports.getGuesses = functionsFirebase.pubsub.schedule('5 13,23 * * *').timeZone
         });
 
     }
+
+    return null
+})
+
+
+exports.checkGuesses = functionsFirebase.pubsub.schedule('5 13,23 * * *').timeZone('America/Chicago').onRun(async context => {    const optionsM = {month: "short", timeZone: 'America/Chicago'};
+
+    const newDateTwo = new Date()
+    let month = new Intl.DateTimeFormat("en-US", optionsM).format(newDateTwo);
+
+
+    const xxCollection = admin.firestore().collection('picks')
+        .where('drawMonth', '==', month)
+        .orderBy('timestamp', 'desc')
+        .limit(1);
+
+    const xxSnapshot = await xxCollection.get();
+    const xxDoc = xxSnapshot.docs[0];
+
+
+    const collectionRef = admin.firestore().collection('guesses');
+    const query = collectionRef
+
+    const snapshot = await query.get();
+
+    for (const doc of snapshot.docs) {
+        if(doc.data().fullNumsString===xxDoc.data().fullNumsString){
+            let citiesRef = await admin.firestore().collection('guesses').doc(doc.id);
+            await citiesRef.update({
+                correctGuess: true
+            })
+        }
+        if(xxDoc.data().winningCombinationsObj.list.includes(doc.data().fullNumsString)){
+            let citiesRef = await admin.firestore().collection('guesses').doc(doc.id);
+            await citiesRef.update({
+                correctGuess: true
+            })
+        }
+    }
+
 
     return null
 })
