@@ -353,7 +353,7 @@ exports.getGuesses = functionsFirebase.pubsub.schedule('5 10,20 * * *').timeZone
 
         const items = []
         let count = 0;
-        while (count < 200) {
+        while (count < 500) {
             let totalPoints = 0
             let dontAdd = false
 
@@ -382,9 +382,13 @@ exports.getGuesses = functionsFirebase.pubsub.schedule('5 10,20 * * *').timeZone
                 third: [randomNumber.numbers[2], draws[0].numbers[2]].join('')
             }
             let sv = await TotalPreviousDrawTwoNumDown(draws, pv)
-            totalPoints += sv.one
-            totalPoints += sv.two
-            totalPoints += sv.three
+            let allSVSum = sv.one + sv.two + sv.three
+            if(allSVSum>1){
+                totalPoints += allSVSum
+            }
+            // totalPoints += sv.one
+            // totalPoints += sv.two
+            // totalPoints += sv.three
 
 
             let rt = await FirstTwoPreviousTen(draws.slice(0,10), randomNumber)
@@ -398,6 +402,26 @@ exports.getGuesses = functionsFirebase.pubsub.schedule('5 10,20 * * *').timeZone
                 dontAdd = true
             }
 
+            for (let i = 0; i < items.length; i++) {
+                if (items[i].numbers[0] === randomNumber.numbers[0] && items[i].numbers[1] === randomNumber.numbers[1]) {
+                    dontAdd = true;
+                    break;
+                }
+            }
+
+            for (let i = 0; i < items.length; i++) {
+                if (items[i].numbers[1] === randomNumber.numbers[1] && items[i].numbers[2] === randomNumber.numbers[2]) {
+                    dontAdd = true;
+                    break;
+                }
+            }
+
+            for (let i = 0; i < items.length; i++) {
+                if (items[i].numbers[0] === randomNumber.numbers[0] && items[i].numbers[2] === randomNumber.numbers[2]) {
+                    dontAdd = true;
+                    break;
+                }
+            }
 
             let rd = await CheckSimilarAllThreeNumsSum(randomNumber, draws.slice(0,5))
             if(!rd){
@@ -408,6 +432,40 @@ exports.getGuesses = functionsFirebase.pubsub.schedule('5 10,20 * * *').timeZone
                 dontAdd = true
             }
             if(randomNumber.evenOdd===draws[0].evenOdd){
+                dontAdd = true
+            }
+            if(items.some(obj => obj.fullNumsString === randomNumber.fullNumsString)){
+                dontAdd = true
+            }
+
+
+            let countOne = 0;
+            for (let i = 0; i < items.length; i++) {
+                if (items[i].numbers[0] === randomNumber.numbers[0]) {
+                    countOne++;
+                }
+            }
+            if(countOne===2){
+                dontAdd = true
+            }
+
+            let countTwo = 0;
+            for (let i = 0; i < items.length; i++) {
+                if (items[i].numbers[1] === randomNumber.numbers[1]) {
+                    countTwo++;
+                }
+            }
+            if(countTwo===2){
+                dontAdd = true
+            }
+
+            let countThree = 0;
+            for (let i = 0; i < items.length; i++) {
+                if (items[i].numbers[2] === randomNumber.numbers[2]) {
+                    countThree++;
+                }
+            }
+            if(countThree===2){
                 dontAdd = true
             }
 
@@ -476,4 +534,81 @@ exports.checkGuesses = functionsFirebase.pubsub.schedule('5 13,23 * * *').timeZo
 
     return null
 })
+
+exports.checkIfPass = functionsFirebase.pubsub.schedule('3 13,23 * * *').timeZone('America/Chicago').onRun(async context => {
+    const newDateTwo = new Date()
+    const optionsMM = {month: "short", timeZone: 'America/Chicago'};
+
+    let month = new Intl.DateTimeFormat("en-US", optionsMM).format(newDateTwo);
+
+    const drawsCollection = admin.firestore().collection('picks').where('drawMonth', '==', month).orderBy('timestamp', 'desc');
+    const snapshot = await drawsCollection.get();
+    const draws = [];
+    const idPicks = []
+
+    // Loop through the documents and add them to the array
+    snapshot.forEach(doc=> {
+        draws.push(doc.data());
+        idPicks.push(doc.id)
+
+    })
+
+    const randomNumber = draws[1]
+
+    const [fullString, firstTwoString] = await PreviousDrawPlusNegative(draws[2], randomNumber)
+    let xc = await TotalPreviousDrawPlusNegative(draws, fullString, firstTwoString)
+    let totalPoints = 0
+    let dontAdd = false
+    totalPoints += xc.firstTwo
+    if(xc.full>=1){
+        dontAdd = true
+    }
+
+
+    let pv = {
+        first: [randomNumber.numbers[0], draws[2].numbers[0]].join(''),
+        second: [randomNumber.numbers[1], draws[2].numbers[1]].join(''),
+        third: [randomNumber.numbers[2], draws[2].numbers[2]].join('')
+    }
+    let sv = await TotalPreviousDrawTwoNumDown(draws.slice(2), pv)
+    let allSVSum = sv.one + sv.two + sv.three
+    if(allSVSum>1){
+        totalPoints += allSVSum
+    }
+
+
+    let rt = await FirstTwoPreviousTen(draws.slice(2,12), randomNumber)
+    totalPoints += rt
+
+    let iu = await CheckIfRandomNumAppearsInPreviousComb(randomNumber.fullNumsString, draws.slice(2,22))
+    totalPoints += iu
+
+
+    let jg = await CheckSimilarWinningNumbers(randomNumber, draws.slice(2))
+    if(!jg){
+        dontAdd = true
+    }
+
+
+    let rd = await CheckSimilarAllThreeNumsSum(randomNumber, draws.slice(2,7))
+    if(!rd){
+        dontAdd = false
+    }
+
+    if(randomNumber.sumAllThreeNums<7||randomNumber.sumAllThreeNums>21){
+        dontAdd = true
+    }
+    if(randomNumber.evenOdd===draws[2].evenOdd){
+        dontAdd = true
+    }
+
+    let objRef = await admin.firestore().collection('picks').doc(idPicks[2]);
+    await objRef.update({
+        points: totalPoints,
+        dontAdd: dontAdd
+    })
+
+    return false
+
+});
 
