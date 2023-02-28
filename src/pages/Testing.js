@@ -143,6 +143,20 @@ function Testing() {
                                     <MoreHorizIcon/>
                                 </AccordionSummary>
                                 <AccordionDetails style={{ textAlign: "center" }}>
+                                    {item.data.points&&
+                                        <>
+                                            <Typography variant="h6" color="text.secondary" gutterBottom style={{color: '#023047'}}>
+                                                points
+                                            </Typography>
+                                            <Typography variant="h6" color="text.secondary" gutterBottom style={{marginTop: -12}}>
+                                                {item.data.points}
+                                            </Typography>
+                                            <Typography variant="h6" color="text.secondary" gutterBottom style={{marginTop: -12}}>
+                                                {item.data.dontAdd?<span>true</span>:<span>false</span>}
+                                            </Typography>
+                                        </>
+                                    }
+
                                     <Typography variant="h6" color="text.secondary" gutterBottom style={{color: '#023047'}}>
                                         sum
                                     </Typography>
@@ -295,20 +309,6 @@ function Testing() {
                                     <MoreHorizIcon/>
                                 </AccordionSummary>
                                 <AccordionDetails style={{ textAlign: "center" }}>
-                                    {item.data.points&&
-                                        <>
-                                            <Typography variant="h6" color="text.secondary" gutterBottom style={{color: '#023047'}}>
-                                                points
-                                            </Typography>
-                                            <Typography variant="h6" color="text.secondary" gutterBottom style={{marginTop: -12}}>
-                                                {item.data.points}
-                                            </Typography>
-                                            <Typography variant="h6" color="text.secondary" gutterBottom style={{marginTop: -12}}>
-                                                {item.data.dontAdd?<span>true</span>:<span>false</span>}
-                                            </Typography>
-                                        </>
-                                    }
-
                                     <Typography variant="h6" color="text.secondary" gutterBottom style={{color: '#023047'}}>
                                         sum
                                     </Typography>

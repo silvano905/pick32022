@@ -553,10 +553,10 @@ exports.checkIfPass = functionsFirebase.pubsub.schedule('3 13,23 * * *').timeZon
 
     })
 
-    const randomNumber = draws[1]
+    const randomNumber = draws[0]
 
-    const [fullString, firstTwoString] = await PreviousDrawPlusNegative(draws[2], randomNumber)
-    let xc = await TotalPreviousDrawPlusNegative(draws, fullString, firstTwoString)
+    const [fullString, firstTwoString] = await PreviousDrawPlusNegative(draws[1], randomNumber)
+    let xc = await TotalPreviousDrawPlusNegative(draws.slice(1), fullString, firstTwoString)
     let totalPoints = 0
     let dontAdd = false
     totalPoints += xc.firstTwo
@@ -566,31 +566,31 @@ exports.checkIfPass = functionsFirebase.pubsub.schedule('3 13,23 * * *').timeZon
 
 
     let pv = {
-        first: [randomNumber.numbers[0], draws[2].numbers[0]].join(''),
-        second: [randomNumber.numbers[1], draws[2].numbers[1]].join(''),
-        third: [randomNumber.numbers[2], draws[2].numbers[2]].join('')
+        first: [randomNumber.numbers[0], draws[1].numbers[0]].join(''),
+        second: [randomNumber.numbers[1], draws[1].numbers[1]].join(''),
+        third: [randomNumber.numbers[2], draws[1].numbers[2]].join('')
     }
-    let sv = await TotalPreviousDrawTwoNumDown(draws.slice(2), pv)
+    let sv = await TotalPreviousDrawTwoNumDown(draws.slice(1), pv)
     let allSVSum = sv.one + sv.two + sv.three
     if(allSVSum>1){
         totalPoints += allSVSum
     }
 
 
-    let rt = await FirstTwoPreviousTen(draws.slice(2,12), randomNumber)
+    let rt = await FirstTwoPreviousTen(draws.slice(1,11), randomNumber)
     totalPoints += rt
 
-    let iu = await CheckIfRandomNumAppearsInPreviousComb(randomNumber.fullNumsString, draws.slice(2,22))
+    let iu = await CheckIfRandomNumAppearsInPreviousComb(randomNumber.fullNumsString, draws.slice(1,21))
     totalPoints += iu
 
 
-    let jg = await CheckSimilarWinningNumbers(randomNumber, draws.slice(2))
+    let jg = await CheckSimilarWinningNumbers(randomNumber, draws.slice(1))
     if(!jg){
         dontAdd = true
     }
 
 
-    let rd = await CheckSimilarAllThreeNumsSum(randomNumber, draws.slice(2,7))
+    let rd = await CheckSimilarAllThreeNumsSum(randomNumber, draws.slice(1,6))
     if(!rd){
         dontAdd = false
     }
@@ -598,11 +598,11 @@ exports.checkIfPass = functionsFirebase.pubsub.schedule('3 13,23 * * *').timeZon
     if(randomNumber.sumAllThreeNums<7||randomNumber.sumAllThreeNums>21){
         dontAdd = true
     }
-    if(randomNumber.evenOdd===draws[2].evenOdd){
+    if(randomNumber.evenOdd===draws[1].evenOdd){
         dontAdd = true
     }
 
-    let objRef = await admin.firestore().collection('picks').doc(idPicks[2]);
+    let objRef = await admin.firestore().collection('picks').doc(idPicks[1]);
     await objRef.update({
         points: totalPoints,
         dontAdd: dontAdd
