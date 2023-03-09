@@ -40,6 +40,8 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 import Avatar from '@mui/material/Avatar';
 import Stack from '@mui/material/Stack';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import HighlightOffIcon from '@mui/icons-material/HighlightOff';
 import MenuItem from '@mui/material/MenuItem';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
 import Spinner from "../components/spinner/Spinner";
@@ -134,6 +136,12 @@ function Testing() {
                                 {item.data.time}
                             </Typography>
 
+                            <Typography variant="h6" color="text.secondary" gutterBottom style={{marginTop: 5}}>
+                                {item.data.dontAdd?<HighlightOffIcon color='warning'/>:<CheckCircleIcon color='success'/>}
+                            </Typography>
+                            <Typography variant="h6" color="text.secondary" gutterBottom style={{marginTop: -12}}>
+                                {item.data.points}
+                            </Typography>
                             <Accordion>
                                 <AccordionSummary
                                     expandIcon={<ExpandMoreIcon />}
@@ -143,20 +151,6 @@ function Testing() {
                                     <MoreHorizIcon/>
                                 </AccordionSummary>
                                 <AccordionDetails style={{ textAlign: "center" }}>
-                                    {item.data.points&&
-                                        <>
-                                            <Typography variant="h6" color="text.secondary" gutterBottom style={{color: '#023047'}}>
-                                                points
-                                            </Typography>
-                                            <Typography variant="h6" color="text.secondary" gutterBottom style={{marginTop: -12}}>
-                                                {item.data.points}
-                                            </Typography>
-                                            <Typography variant="h6" color="text.secondary" gutterBottom style={{marginTop: -12}}>
-                                                {item.data.dontAdd?<span>true</span>:<span>false</span>}
-                                            </Typography>
-                                        </>
-                                    }
-
                                     <Typography variant="h6" color="text.secondary" gutterBottom style={{color: '#023047'}}>
                                         sum
                                     </Typography>

@@ -4,15 +4,20 @@ async function FirstTwoPreviousTen(list, obj){
         if(arrayItem.firstTwoNumsObj.firstTwoNumsSum===obj.firstTwoNumsObj.firstTwoNumsSum&&
             arrayItem.firstTwoNumsObj.firstTwoEvenOdd===obj.firstTwoNumsObj.firstTwoEvenOdd){
             count += 1
+            console.log('1')
+
         }
         if(arrayItem.firstTwoNumsObj.firstTwoNumsString===obj.firstTwoNumsObj.firstTwoNumsString&&
             arrayItem.firstTwoNumsObj.firstTwoNumsSum===obj.firstTwoNumsObj.firstTwoNumsSum){
             count += 1
+            console.log('2')
+
         }
 
         if(arrayItem.lastTwoNumsObj.lastTwoNumsSum===obj.lastTwoNumsObj.lastTwoNumsSum&&
             arrayItem.lastTwoNumsObj.lastTwoEvenOdd===obj.lastTwoNumsObj.lastTwoEvenOdd){
             count += 1
+            console.log('3')
         }
         if(arrayItem.lastTwoNumsObj.lastTwoNumsString===obj.lastTwoNumsObj.lastTwoNumsString&&
             arrayItem.lastTwoNumsObj.lastTwoNumsSum===obj.lastTwoNumsObj.lastTwoNumsSum){

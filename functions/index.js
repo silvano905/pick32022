@@ -193,6 +193,7 @@ exports.getOne = functionsFirebase.pubsub.schedule('0 13,23 * * *').timeZone('Am
     const firstElement = divsWithClassDfs.eq(0);
     const secondElement = divsWithClassDfs.eq(1);
     const drawMonthText = firstElement.find('.dbg-results__date-info');
+    const divWithClassFs = firstElement.find('.dbg-results__date-info');
     const drawMonthTextSecond = firstElement.find('.dbg-results__date-info');
     const middayOrEvening = firstElement.find('.dbg-results__draw-info');
     const fireball = firstElement.find(".grid-ball--pick3-secondary")
@@ -265,7 +266,7 @@ exports.getOne = functionsFirebase.pubsub.schedule('0 13,23 * * *').timeZone('Am
 
     const result = {
         numbers: [...gridBallPicks],
-        drawDate: todayFormatted,
+        drawDate: divWithClassFs.text(),
         drawMonth: drawMonthText.text().substring(0, 3),
         index: r,
         time: middayOrEvening.text().replace(/[^a-zA-Z]+/g, ""),
@@ -341,7 +342,7 @@ exports.getGuesses = functionsFirebase.pubsub.schedule('5 10,20 * * *').timeZone
         });
 
 
-        //to get past draw same day
+        //to get past draw same day and time
         const xxCollection = admin.firestore().collection('picks')
             .where('index', '==', draws[0].index+1)
             .orderBy('timestamp', 'desc')
@@ -353,7 +354,7 @@ exports.getGuesses = functionsFirebase.pubsub.schedule('5 10,20 * * *').timeZone
 
         const items = []
         let count = 0;
-        while (count < 500) {
+        while (count < 800) {
             let totalPoints = 0
             let dontAdd = false
 
@@ -391,7 +392,7 @@ exports.getGuesses = functionsFirebase.pubsub.schedule('5 10,20 * * *').timeZone
             // totalPoints += sv.three
 
 
-            let rt = await FirstTwoPreviousTen(draws.slice(0,10), randomNumber)
+            let rt = await FirstTwoPreviousTen(draws.slice(0,8), randomNumber)
             totalPoints += rt
 
             let iu = await CheckIfRandomNumAppearsInPreviousComb(randomNumber.fullNumsString, draws.slice(0,20))
@@ -577,7 +578,7 @@ exports.checkIfPass = functionsFirebase.pubsub.schedule('3 13,23 * * *').timeZon
     }
 
 
-    let rt = await FirstTwoPreviousTen(draws.slice(1,11), randomNumber)
+    let rt = await FirstTwoPreviousTen(draws.slice(1,9), randomNumber)
     totalPoints += rt
 
     let iu = await CheckIfRandomNumAppearsInPreviousComb(randomNumber.fullNumsString, draws.slice(1,21))
@@ -602,7 +603,11 @@ exports.checkIfPass = functionsFirebase.pubsub.schedule('3 13,23 * * *').timeZon
         dontAdd = true
     }
 
-    let objRef = await admin.firestore().collection('picks').doc(idPicks[1]);
+    if(!totalPoints<1){
+        dontAdd = true
+    }
+
+    let objRef = await admin.firestore().collection('picks').doc(idPicks[0]);
     await objRef.update({
         points: totalPoints,
         dontAdd: dontAdd
