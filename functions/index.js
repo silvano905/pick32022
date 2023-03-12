@@ -546,7 +546,7 @@ exports.checkIfPass = functionsFirebase.pubsub.schedule('3 13,23 * * *').timeZon
     const snapshot = await drawsCollection.get();
     const draws = [];
     const idPicks = []
-
+    const reasons = []
     // Loop through the documents and add them to the array
     snapshot.forEach(doc=> {
         draws.push(doc.data());
@@ -562,6 +562,7 @@ exports.checkIfPass = functionsFirebase.pubsub.schedule('3 13,23 * * *').timeZon
     let dontAdd = false
     totalPoints += xc.firstTwo
     if(xc.full>=1){
+        reasons.push('total previous draw plus negative')
         dontAdd = true
     }
 
@@ -574,32 +575,42 @@ exports.checkIfPass = functionsFirebase.pubsub.schedule('3 13,23 * * *').timeZon
     let sv = await TotalPreviousDrawTwoNumDown(draws.slice(1), pv)
     let allSVSum = sv.one + sv.two + sv.three
     if(allSVSum>1){
+        reasons.push('total previous draw two num down')
         totalPoints += allSVSum
     }
 
 
     let rt = await FirstTwoPreviousTen(draws.slice(1,9), randomNumber)
+    if(rt>1){
+        reasons.push('first two previous ten')
+    }
     totalPoints += rt
 
     let iu = await CheckIfRandomNumAppearsInPreviousComb(randomNumber.fullNumsString, draws.slice(1,21))
+    if(iu>1){
+        reasons.push('check if random num appears in previous comb')
+    }
     totalPoints += iu
 
 
     let jg = await CheckSimilarWinningNumbers(randomNumber, draws.slice(1))
     if(!jg){
+        reasons.push('check similar winning numbers')
         dontAdd = true
     }
 
 
     let rd = await CheckSimilarAllThreeNumsSum(randomNumber, draws.slice(1,6))
     if(!rd){
-        dontAdd = false
+        reasons.push('check similar all three nums sum')
+        dontAdd = true
     }
 
     if(randomNumber.sumAllThreeNums<7||randomNumber.sumAllThreeNums>21){
         dontAdd = true
     }
     if(randomNumber.evenOdd===draws[1].evenOdd){
+        reasons.push(`even odd`)
         dontAdd = true
     }
 
@@ -610,7 +621,8 @@ exports.checkIfPass = functionsFirebase.pubsub.schedule('3 13,23 * * *').timeZon
     let objRef = await admin.firestore().collection('picks').doc(idPicks[0]);
     await objRef.update({
         points: totalPoints,
-        dontAdd: dontAdd
+        dontAdd: dontAdd,
+        reasons: reasons
     })
 
     return false

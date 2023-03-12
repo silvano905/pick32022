@@ -151,6 +151,16 @@ function Testing() {
                                     <MoreHorizIcon/>
                                 </AccordionSummary>
                                 <AccordionDetails style={{ textAlign: "center" }}>
+                                    <div>
+                                        {[...item.data.reasons].map(i => {
+                                            return (
+                                                <Typography variant="body1" color="text.secondary" gutterBottom>
+                                                    {i}
+                                                </Typography>
+                                            );
+                                        })}
+                                    </div>
+
                                     <Typography variant="h6" color="text.secondary" gutterBottom style={{color: '#023047'}}>
                                         sum
                                     </Typography>
